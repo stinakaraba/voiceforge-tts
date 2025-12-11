@@ -12,17 +12,25 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 
-// Serve static files from public folder
-app.use(express.static(path.join(__dirname, 'public')));
+// Request logging (helpful for debugging)
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  next();
+});
 
-// API Routes
+// API Routes FIRST (before static files)
 app.use('/api/auth', authRoutes);
 app.use('/api/tts', ttsRoutes);
 
-// Voices endpoint (convenience - also available via tts routes)
+// Voices endpoint
 app.get('/api/voices', (req, res) => {
   const voices = [
     { id: 'Ashley', name: 'Ashley', description: 'Warm, natural female' },
@@ -44,18 +52,20 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Serve index.html for root
-app.get('/', (req, res) => {
+// Serve static files from public folder AFTER API routes
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Serve index.html for any non-API route (SPA fallback)
+app.get('*', (req, res) => {
+  // Don't serve index.html for API routes
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'Endpoint not found' });
+  }
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// 404 handler for API routes
-app.use('/api/*', (req, res) => {
-  res.status(404).json({ error: 'Endpoint not found' });
-});
-
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`
   🎙️  VoiceForge API Server
   ========================
