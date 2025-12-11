@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VoiceForge - AI Text-to-Speech Generator</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #6366F1;
+      --primary-dark: #4F46E5;
+      --primary-light: #818CF8;
+      --background: #FAFAFA;
+      --card: #FFFFFF;
+      --text: #1F2937;
+      --text-light: #6B7280;
+      --success: #10B981;
+      --error: #EF4444;
+      --border: #E5E7EB;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+      --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--background);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* Header */
+    header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.5rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .header-content {
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .header-buttons {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    /* Main Container */
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Landing Page */
+    #landing-view {
+      text-align: center;
+      padding: 4rem 2rem;
+    }
+
+    #landing-view h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: var(--text);
+    }
+
+    #landing-view .subtitle {
+      font-size: 1.25rem;
+      color: var(--text-light);
+      margin-bottom: 2.5rem;
+    }
+
+    .features {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-top: 3rem;
+      flex-wrap: wrap;
+    }
+
+    .feature {
+      background: var(--background);
+      padding: 1.5rem;
+      border-radius: var(--radius-md);
+      min-width: 140px;
+    }
+
+    .feature-icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .feature-text {
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    /* Auth Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 400px;
+      margin: 1rem;
+      transform: translateY(-20px);
+      transition: transform 0.2s ease;
+    }
+
+    .modal-overlay.active .modal {
+      transform: translateY(0);
+    }
+
+    .modal h2 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      font-size: 1.5rem;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--text-light);
+    }
+
+    /* Forms */
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+
+    label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+    }
+
+    input[type="email"],
+    input[type="password"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 0.875rem 1rem;
+      border: 2px solid var(--border);
+      border-radius: var(--radius-md);
+      font-size: 1rem;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      background: var(--card);
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    /* Textarea */
+    textarea {
+      min-height: 200px;
+      resize: vertical;
+      font-family: inherit;
+    }
+
+    .char-count {
+      text-align: right;
+      font-size: 0.875rem;
+      color: var(--text-light);
+      margin-top: 0.5rem;
+    }
+
+    .char-count.warning {
+      color: var(--error);
+      font-weight: 600;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.875rem 1.5rem;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-primary:disabled {
+      background: var(--text-light);
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--primary);
+      border: 2px solid var(--primary);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(99, 102, 241, 0.1);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-light);
+    }
+
+    .btn-ghost:hover {
+      color: var(--text);
+      background: var(--background);
+    }
+
+    .btn-full {
+      width: 100%;
+    }
+
+    .btn-lg {
+      padding: 1.125rem 2rem;
+      font-size: 1.125rem;
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #059669;
+    }
+
+    /* Voice Selector */
+    .voice-selector {
+      display: flex;
+      gap: 1rem;
+      align-items: flex-end;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .voice-selector .form-group {
+      flex: 1;
+      min-width: 200px;
+      margin-bottom: 0;
+    }
+
+    select {
+      cursor: pointer;
+    }
+
+    /* Audio Result */
+    #audio-result {
+      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+      border: 2px solid var(--success);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      margin-top: 1.5rem;
+      display: none;
+    }
+
+    #audio-result.active {
+      display: block;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .result-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 600;
+      color: var(--success);
+      margin-bottom: 1rem;
+      font-size: 1.125rem;
+    }
+
+    audio {
+      width: 100%;
+      margin-bottom: 1rem;
+    }
+
+    .result-buttons {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    /* Messages */
+    .message {
+      padding: 1rem;
+      border-radius: var(--radius-md);
+      margin-bottom: 1rem;
+      font-weight: 500;
+    }
+
+    .message-error {
+      background: #FEF2F2;
+      color: var(--error);
+      border: 1px solid #FECACA;
+    }
+
+    .message-success {
+      background: #F0FDF4;
+      color: var(--success);
+      border: 1px solid #BBF7D0;
+    }
+
+    /* Loading Spinner */
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* User Info */
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .user-email {
+      color: var(--text-light);
+      font-size: 0.875rem;
+    }
+
+    /* Link Style */
+    .link {
+      color: var(--primary);
+      text-decoration: none;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .link:hover {
+      text-decoration: underline;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .mt-1 { margin-top: 1rem; }
+
+    /* Hidden */
+    .hidden {
+      display: none !important;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      #landing-view h1 {
+        font-size: 1.75rem;
+      }
+
+      .features {
+        gap: 1rem;
+      }
+
+      .feature {
+        min-width: 100px;
+        padding: 1rem;
+      }
+
+      .card {
+        padding: 1.5rem;
+      }
+
+      .voice-selector {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="header-content">
+      <div class="logo">🎙️ VoiceForge</div>
+      <div class="header-buttons" id="header-buttons">
+        <!-- Buttons inserted by JS based on auth state -->
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main>
+    <!-- Landing View (Logged Out) -->
+    <div id="landing-view" class="card">
+      <h1>Transform Your Text Into<br>Beautiful AI Voices</h1>
+      <p class="subtitle">Paste your text, pick a voice, download.<br>It's that simple.</p>
+      <button class="btn btn-primary btn-lg" onclick="showModal('signup')">
+        Get Started Free
+      </button>
+      <div class="features">
+        <div class="feature">
+          <div class="feature-icon">🎭</div>
+          <div class="feature-text">6 Voices</div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">🎧</div>
+          <div class="feature-text">HD Audio</div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">⚡</div>
+          <div class="feature-text">Instant</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dashboard View (Logged In) -->
+    <div id="dashboard-view" class="hidden">
+      <div class="card">
+        <div id="message-container"></div>
+        
+        <div class="form-group">
+          <label for="text-input">Enter your text</label>
+          <textarea 
+          id="text-input" 
+          placeholder="Paste or type your text here... Try something like: 'Hello! Welcome to VoiceForge, where your words come to life with beautiful AI voices.'"
+          maxlength="5000"
+          ></textarea>
+          <div class="char-count" id="char-count">0 / 5000</div>
+        </div>
+
+        <div class="voice-selector">
+          <div class="form-group">
+            <label for="voice-select">Voice</label>
+            <select id="voice-select">
+              <option value="Ashley" selected>Ashley - Warm, natural female</option>
+              <option value="Dennis">Dennis - Smooth, calm male</option>
+              <option value="Alex">Alex - Energetic, expressive male</option>
+              <option value="Emma">Emma - Friendly, professional female</option>
+              <option value="James">James - Deep, authoritative male</option>
+              <option value="Sophia">Sophia - Soft, gentle female</option>
+            </select>
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-full btn-lg" id="generate-btn" onclick="generateAudio()">
+          🎵 Generate Audio
+        </button>
+
+        <div id="audio-result">
+          <div class="result-header">
+            ✅ Audio Ready!
+          </div>
+          <audio id="audio-player" controls></audio>
+          <div class="result-buttons">
+            <button class="btn btn-success" id="download-btn" onclick="downloadAudio()">
+              ⬇️ Download MP3
+            </button>
+            <button class="btn btn-secondary" onclick="resetGenerator()">
+              🎵 Generate New
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Auth Modal -->
+  <div class="modal-overlay" id="auth-modal">
+    <div class="modal">
+      <h2 id="modal-title">Create Account</h2>
+      <div id="auth-message"></div>
+      <form id="auth-form" onsubmit="handleAuth(event)">
+        <div class="form-group">
+          <label for="auth-email">Email</label>
+          <input type="email" id="auth-email" required placeholder="you@example.com">
+        </div>
+        <div class="form-group">
+          <label for="auth-password">Password</label>
+          <input type="password" id="auth-password" required minlength="6" placeholder="At least 6 characters">
+        </div>
+        <button type="submit" class="btn btn-primary btn-full" id="auth-submit-btn">
+          Sign Up
+        </button>
+      </form>
+      <p class="text-center mt-1">
+        <span id="auth-switch-text">Already have an account?</span>
+        <span class="link" id="auth-switch-link" onclick="toggleAuthMode()">Log in</span>
+      </p>
+      <p class="text-center mt-1">
+        <span class="link" onclick="hideModal()">Cancel</span>
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // State
+    let currentUser = null;
+    let accessToken = null;
+    let authMode = 'signup'; // 'signup' or 'login'
+    let audioBlob = null;
+    let audioFilename = '';
+
+    // DOM Elements
+    const landingView = document.getElementById('landing-view');
+    const dashboardView = document.getElementById('dashboard-view');
+    const headerButtons = document.getElementById('header-buttons');
+    const authModal = document.getElementById('auth-modal');
+    const textInput = document.getElementById('text-input');
+    const charCount = document.getElementById('char-count');
+    const generateBtn = document.getElementById('generate-btn');
+    const audioResult = document.getElementById('audio-result');
+    const audioPlayer = document.getElementById('audio-player');
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      // Check for saved session
+      const savedSession = localStorage.getItem('voiceforge_session');
+      if (savedSession) {
+        const session = JSON.parse(savedSession);
+        currentUser = session.user;
+        accessToken = session.access_token;
+        updateUI();
+      } else {
+        updateUI();
+      }
+
+      // Character count listener
+      textInput.addEventListener('input', updateCharCount);
+    });
+
+    // Update UI based on auth state
+    function updateUI() {
+      if (currentUser) {
+        landingView.classList.add('hidden');
+        dashboardView.classList.remove('hidden');
+        headerButtons.innerHTML = `
+          <span class="user-email">${currentUser.email}</span>
+          <button class="btn btn-ghost" onclick="logout()">Logout</button>
+        `;
+      } else {
+        landingView.classList.remove('hidden');
+        dashboardView.classList.add('hidden');
+        headerButtons.innerHTML = `
+          <button class="btn btn-ghost" onclick="showModal('login')">Login</button>
+          <button class="btn btn-primary" onclick="showModal('signup')">Sign Up</button>
+        `;
+      }
+    }
+
+    // Modal functions
+    function showModal(mode) {
+      authMode = mode;
+      updateModalUI();
+      authModal.classList.add('active');
+      document.getElementById('auth-email').focus();
+    }
+
+    function hideModal() {
+      authModal.classList.remove('active');
+      document.getElementById('auth-form').reset();
+      document.getElementById('auth-message').innerHTML = '';
+    }
+
+    function toggleAuthMode() {
+      authMode = authMode === 'signup' ? 'login' : 'signup';
+      updateModalUI();
+    }
+
+    function updateModalUI() {
+      const title = document.getElementById('modal-title');
+      const submitBtn = document.getElementById('auth-submit-btn');
+      const switchText = document.getElementById('auth-switch-text');
+      const switchLink = document.getElementById('auth-switch-link');
+
+      if (authMode === 'signup') {
+        title.textContent = 'Create Account';
+        submitBtn.textContent = 'Sign Up';
+        switchText.textContent = 'Already have an account?';
+        switchLink.textContent = 'Log in';
+      } else {
+        title.textContent = 'Welcome Back';
+        submitBtn.textContent = 'Log In';
+        switchText.textContent = "Don't have an account?";
+        switchLink.textContent = 'Sign up';
+      }
+    }
+
+    // Auth handler
+    async function handleAuth(event) {
+      event.preventDefault();
+      
+      const email = document.getElementById('auth-email').value;
+      const password = document.getElementById('auth-password').value;
+      const submitBtn = document.getElementById('auth-submit-btn');
+      const messageEl = document.getElementById('auth-message');
+
+      // Disable button and show loading
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="spinner"></span> Please wait...';
+      messageEl.innerHTML = '';
+
+      try {
+        const endpoint = authMode === 'signup' ? '/api/auth/signup' : '/api/auth/login';
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Authentication failed');
+        }
+
+        // Check if email confirmation is required
+        if (data.confirmationRequired || !data.session) {
+          messageEl.innerHTML = `<div class="message message-success">Account created! Check your email to confirm, then log in.</div>`;
+          // Switch to login mode after signup
+          setTimeout(() => {
+            authMode = 'login';
+            updateModalUI();
+          }, 2000);
+          return;
+        }
+
+        // Save session
+        currentUser = data.user;
+        accessToken = data.session.access_token;
+        localStorage.setItem('voiceforge_session', JSON.stringify({
+          user: data.user,
+          access_token: data.session.access_token,
+        }));
+
+        hideModal();
+        updateUI();
+        showMessage('Welcome to VoiceForge! 🎉', 'success');
+      } catch (error) {
+        messageEl.innerHTML = `<div class="message message-error">${error.message}</div>`;
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = authMode === 'signup' ? 'Sign Up' : 'Log In';
+      }
+    }
+
+    // Logout
+    function logout() {
+      currentUser = null;
+      accessToken = null;
+      localStorage.removeItem('voiceforge_session');
+      updateUI();
+      resetGenerator();
+    }
+
+    // Character count
+    function updateCharCount() {
+      const count = textInput.value.length;
+      charCount.textContent = `${count} / 5000`;
+      charCount.classList.toggle('warning', count > 5000);
+    }
+
+    // Generate audio
+    async function generateAudio() {
+      const text = textInput.value.trim();
+      const voice = document.getElementById('voice-select').value;
+
+      if (!text) {
+        showMessage('Please enter some text first.', 'error');
+        return;
+      }
+
+      if (text.length > 5000) {
+        showMessage('Text exceeds 5000 character limit.', 'error');
+        return;
+      }
+
+      // Update UI to loading state
+      generateBtn.disabled = true;
+      generateBtn.innerHTML = '<span class="spinner"></span> Generating your audio...';
+      audioResult.classList.remove('active');
+      clearMessage();
+
+      try {
+        const response = await fetch('/api/tts/generate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({ text, voice }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Generation failed');
+        }
+
+        // Get audio blob
+        audioBlob = await response.blob();
+        
+        // Get filename from header or generate one
+        const disposition = response.headers.get('Content-Disposition');
+        if (disposition) {
+          const match = disposition.match(/filename="(.+)"/);
+          audioFilename = match ? match[1] : `voiceforge_${voice}_audio.mp3`;
+        } else {
+          audioFilename = `voiceforge_${voice}_audio.mp3`;
+        }
+
+        // Create object URL and set audio source
+        const audioUrl = URL.createObjectURL(audioBlob);
+        audioPlayer.src = audioUrl;
+        
+        // Show result
+        audioResult.classList.add('active');
+        showMessage('Audio generated successfully! 🎉', 'success');
+      } catch (error) {
+        showMessage(error.message, 'error');
+      } finally {
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = '🎵 Generate Audio';
+      }
+    }
+
+    // Download audio
+    function downloadAudio() {
+      if (!audioBlob) return;
+
+      const url = URL.createObjectURL(audioBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = audioFilename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // Reset generator
+    function resetGenerator() {
+      textInput.value = '';
+      updateCharCount();
+      audioResult.classList.remove('active');
+      audioPlayer.src = '';
+      audioBlob = null;
+      audioFilename = '';
+      clearMessage();
+    }
+
+    // Messages
+    function showMessage(text, type) {
+      const container = document.getElementById('message-container');
+      container.innerHTML = `<div class="message message-${type}">${text}</div>`;
+    }
+
+    function clearMessage() {
+      document.getElementById('message-container').innerHTML = '';
+    }
+
+    // Close modal on overlay click
+    authModal.addEventListener('click', (e) => {
+      if (e.target === authModal) {
+        hideModal();
+      }
+    });
+
+    // Close modal on escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && authModal.classList.contains('active')) {
+        hideModal();
+      }
+    });
+  </script>
+</body>
+</html>
