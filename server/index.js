@@ -16,7 +16,7 @@ app.use(cors());
 app.use(express.json());
 
 // Serve static files from public folder
-app.use(express.static(path.join(__dirname, '..', 'public')));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -46,7 +46,7 @@ app.get('/api/health', (req, res) => {
 
 // Serve index.html for root
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // 404 handler for API routes
